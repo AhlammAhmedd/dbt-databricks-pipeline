@@ -19,18 +19,28 @@ parsed AS(
 cleaned AS(
 SELECT 
     job_id,
+    search_term,
+    search_date,
+    search_time AS searched_at,
+    search_location,
+
     job_title,
     TRIM(company_name) AS company_name,
     job_location,
-    regexp_replace(job_via, '^via', '') AS source_platform,
-    job_posted_at,
-    job_salary,
+    REGEXP_REPLACE(job_via, '^via', '') AS source_platform,
     job_schedule_type,
     job_work_from_home,
-    search_time AS searched_at,
-    search_date,
-    search_term,
-    search_location,
+    job_posted_at,
+    job_salary,
+    {{ parse_salary('min') }} AS salary_min,
+    {{ parse_salary('max') }} AS salary_max,
+    ({{ parse_salary('min') }} + {{ parse_salary('max') }}) / 2 AS salary_avg,
+    NULLIF(REGEXP_EXTRACT(job_salary, 'an? (year|hour|month|day|week)$', 1), '') AS salary_period,
+    CASE
+        WHEN job_salary IS NOT NULL
+        THEN COALESCE(NULLIF(TRIM(REGEXP_EXTRACT(job_salary, '^([^0-9]+)', 1)), ''), 'USD')
+    END AS salary_currency,
+
     {% for keyword in extension_keywords -%}
     ARRAY_CONTAINS(
         job_extensions,
