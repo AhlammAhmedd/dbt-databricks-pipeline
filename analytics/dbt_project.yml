@@ -20,3 +20,7 @@ models:
     marts:
       +materialized: view
       +schema: marts
+
+seeds:
+  analytics:
+    +schema: seeds
